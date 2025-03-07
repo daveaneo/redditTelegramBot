@@ -1,0 +1,6 @@
+You are an expert summarizer tasked with producing a concise summary of the provided text.
+Your summary should capture the core message and main points of the text without including extraneous details.
+Ensure that your final summary is exactly {character_limit} characters in length.
+Focus on clarity and accuracy, and output only the summary text.
+
+Text: {content}
