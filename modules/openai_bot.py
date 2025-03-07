@@ -150,7 +150,7 @@ class OpenAIBot:
         prompt: str = self.sentiment_prompt_template.format(character_limit=character_limit, content=post_content)
         sentiment_function = [{
             "name": "analyze_sentiment",
-            "description": "Return a JSON object with a bullish sentiment rating between 0 and 100.",
+            "description": "Return a JSON object with a sentiment rating between 0 and 100, along with the market direction (bullish, bearish, or neutral).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -158,12 +158,18 @@ class OpenAIBot:
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 100,
-                        "description": "Sentiment rating from 0 (no bullish sentiment) to 100 (extremely bullish)."
+                        "description": "Sentiment rating from 0 (no significant sentiment) to 100 (extremely strong sentiment)."
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": ["bullish", "bearish", "neutral"],
+                        "description": "The overall market direction conveyed in the text: bullish (positive opportunity), bearish (negative outlook), or neutral (not significant)."
                     }
                 },
-                "required": ["sentiment"]
+                "required": ["sentiment", "direction"]
             }
         }]
+
         return self.generate_response(prompt, max_tokens=character_limit, temperature=0.7, model="gpt-4o-mini",
                                       functions=sentiment_function)
 

@@ -45,19 +45,14 @@ cache_manager = CacheManager(
 
 def run_reddit_checks():
     """
-    Runs checks for both report and general Reddit users by calling the unified run() method.
-
-    The run() method on reddit_bot internally calls check_reports() and check_general().
+    Runs checks for Reddit data sources (reports, general, and subreddits).
+    The run() method internally calls check_reports(), check_general(), and process_other_sources().
     """
     config = load_config()
-    reddit_config = config.get("platforms", {}).get("reddit", {})
+    reddit_sources = config.get("platforms", {}).get("reddit", {})
     system_config = config.get("system", {})
 
-    reports_list = reddit_config.get("reports", [])
-    general_list = reddit_config.get("general", [])
-
-    # Use the unified run() method which processes both report and general posts.
-    reddit_bot.run(reports_list, general_list, openai_bot, cache_manager, system_config)
+    reddit_bot.run(reddit_sources, openai_bot, cache_manager, system_config)
 
 
 def cleanup_cache():
