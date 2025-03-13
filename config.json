@@ -24,6 +24,7 @@
     "summary_char_limit": 100,
     "telegram_enabled": true,
     "telegram_chat_id": "-1002443753037",
+    "telegram_heartbeat_recipient": "504186992",
     "cache_file": "cache.json",
     "cache_expiration_seconds": 172800,
     "openai_model": "gpt-4o-mini"

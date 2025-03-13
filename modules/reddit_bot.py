@@ -2,6 +2,7 @@ import praw
 import os
 import logging
 import json
+import time
 from typing import Any, Dict, List
 from modules.social_media_bot import SocialMediaBot
 
@@ -21,6 +22,38 @@ class RedditBot(SocialMediaBot):
         # Track processed posts to avoid duplicate processing.
         self.processed_posts = set()
 
+    # def check_reports(
+    #         self,
+    #         reports_list: List[str],
+    #         openai_bot: Any,
+    #         cache_manager: Any,
+    #         system_config: Dict[str, Any]
+    # ) -> None:
+    #     """
+    #     Processes posts from 'reports' users.
+    #
+    #     Posts are forwarded directly with follow-up analyses.
+    #
+    #     Args:
+    #         reports_list (List[str]): List of Reddit usernames for reports.
+    #         openai_bot (Any): Instance of OpenAIBot.
+    #         cache_manager (Any): Instance of CacheManager.
+    #         system_config (Dict[str, Any]): System configuration parameters.
+    #     """
+    #     for user in reports_list:
+    #         try:
+    #             for submission in self.client.redditor(user).submissions.new(limit=1):
+    #                 logging.debug(f"Processing submission: {submission.id}")
+    #                 if not cache_manager.is_cached(submission.id):
+    #                     cache_manager.add(submission.id)
+    #                     self.process_significant_message("Report", user, submission, openai_bot, system_config)
+    #                 else:
+    #                     logging.debug(f"Report post {submission.id} already processed. Skipping.")
+    #         except Exception as e:
+    #             logging.error(f"Error processing report from {user}: {e}")
+
+    import time
+
     def check_reports(
             self,
             reports_list: List[str],
@@ -29,9 +62,7 @@ class RedditBot(SocialMediaBot):
             system_config: Dict[str, Any]
     ) -> None:
         """
-        Processes posts from 'reports' users.
-
-        Posts are forwarded directly with follow-up analyses.
+        Processes posts from 'reports' users within the last week.
 
         Args:
             reports_list (List[str]): List of Reddit usernames for reports.
@@ -39,15 +70,19 @@ class RedditBot(SocialMediaBot):
             cache_manager (Any): Instance of CacheManager.
             system_config (Dict[str, Any]): System configuration parameters.
         """
+        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)  # Timestamp for 7 days ago
+
         for user in reports_list:
             try:
-                for submission in self.client.redditor(user).submissions.new(limit=1):
-                    logging.debug(f"Processing submission: {submission.id}")
-                    if not cache_manager.is_cached(submission.id):
-                        cache_manager.add(submission.id)
-                        self.process_significant_message("Report", user, submission, openai_bot, system_config)
-                    else:
-                        logging.debug(f"Report post {submission.id} already processed. Skipping.")
+                for submission in self.client.redditor(user).submissions.new(limit=25):  # Fetch latest 25 posts
+                    if submission.created_utc >= one_week_ago:  # Only process posts from the last 7 days
+                        logging.debug(f"Processing submission: {submission.id} from {user}")
+
+                        if not cache_manager.is_cached(submission.id):
+                            cache_manager.add(submission.id)
+                            self.process_significant_message("Report", user, submission, openai_bot, system_config)
+                        else:
+                            logging.debug(f"Report post {submission.id} already processed. Skipping.")
             except Exception as e:
                 logging.error(f"Error processing report from {user}: {e}")
 
@@ -59,7 +94,7 @@ class RedditBot(SocialMediaBot):
             system_config: Dict[str, Any]
     ) -> None:
         """
-        Processes posts from 'general' users.
+        Processes posts from 'general' users within the last week.
 
         Posts are analyzed for significance and forwarded if deemed significant.
 
@@ -69,21 +104,26 @@ class RedditBot(SocialMediaBot):
             cache_manager (Any): Instance of CacheManager.
             system_config (Dict[str, Any]): System configuration parameters.
         """
+        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)  # Timestamp for 7 days ago
+
         for user in general_list:
             try:
-                for submission in self.client.redditor(user).submissions.new(limit=1):
-                    if not cache_manager.is_cached(submission.id):
-                        cache_manager.add(submission.id)
-                        # Analyze post for significance.
-                        significance = openai_bot.review_post(submission.selftext)
-                        if "YES" in significance.upper():
-                            self.process_significant_message(
-                                "General post (significant)", user, submission, openai_bot, system_config
-                            )
+                for submission in self.client.redditor(user).submissions.new(limit=25):  # Fetch latest 25 posts
+                    if submission.created_utc >= one_week_ago:  # Only process posts from the last 7 days
+                        if not cache_manager.is_cached(submission.id):
+                            cache_manager.add(submission.id)
+
+                            # Analyze post for significance.
+                            significance = openai_bot.review_post(submission.selftext)
+
+                            if "YES" in significance.upper():
+                                self.process_significant_message(
+                                    "General post (significant)", user, submission, openai_bot, system_config
+                                )
+                            else:
+                                logging.debug(f"General post {submission.id} from {user} deemed not significant.")
                         else:
-                            logging.debug(f"General post {submission.id} from {user} deemed not significant.")
-                    else:
-                        logging.debug(f"General post {submission.id} already processed. Skipping.")
+                            logging.debug(f"General post {submission.id} already processed. Skipping.")
             except Exception as e:
                 logging.error(f"Error processing general post from {user}: {e}")
 

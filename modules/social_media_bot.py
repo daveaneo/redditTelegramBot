@@ -66,6 +66,45 @@ class SocialMediaBot(ABC):
         self.send_telegram_message(original_message, sentiment, summary, system_config)
 
 
+    def send_heartbeat_message(self, system_config):
+        """
+        Sends a daily 'Bot is still running' message to a specific Telegram user.
+
+        Args:
+            system_config (dict): Configuration settings.
+        """
+        if not system_config.get("telegram_enabled", True):
+            logging.info("Telegram notifications are disabled.")
+            return
+
+        print(system_config)
+
+        TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+        TELEGRAM_CHAT_ID = system_config.get("telegram_heartbeat_recipient", "")
+
+        if not TELEGRAM_CHAT_ID:
+            logging.warning("No heartbeat recipient specified in config.")
+            return
+
+        send_message_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+        # Format timestamp for logging
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
+
+        # Heartbeat message
+        heartbeat_message = f"✅ Bot is still running. Last check-in: {timestamp}"
+
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": heartbeat_message}
+
+        try:
+            response = requests.post(send_message_url, json=payload)
+            if response.status_code != 200:
+                logging.error(f"Telegram API error: {response.status_code} - {response.text}")
+            else:
+                logging.info("✅ Heartbeat message sent successfully.")
+        except Exception as e:
+            logging.error(f"Error sending heartbeat message: {e}")
+
     def send_telegram_message(self, original_message, sentiment_data, summary, system_config):
         """
         Sends messages to Telegram as a threaded conversation.
