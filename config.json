@@ -9,7 +9,7 @@
       "subreddits": {
         "wallstreetbets": {
           "target_flair": "DD",
-          "min_karma": 2500,
+          "min_karma": 2000,
           "sentiment_threshold": 50
         }
       },
