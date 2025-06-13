@@ -107,7 +107,7 @@ class SocialMediaBot(ABC):
             logging.error(f"Error sending heartbeat message: {e}")
 
 
-    def send_telegram_message(original_message, sentiment_data, summary, system_config):
+    def send_telegram_message(self, original_message, sentiment_data, summary, system_config):
         """
         Sends a single, consolidated message to a Telegram chat.
 
