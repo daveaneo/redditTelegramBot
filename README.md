@@ -85,10 +85,20 @@ Update the `config.json` file with your settings:
 
 ## Usage
 
+Activate venv
+```commandline
+source venv/bin/activate
+```
+
 Run the bot:
 
 ```bash
 python main.py
+```
+
+Run even after logging out of a remote server
+```commandline
+nohup python3 main.py > output.log 2>&1 &
 ```
 
 The bot will run continuously, checking for new posts every minute and cleaning up cached data hourly.

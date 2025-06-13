@@ -107,12 +107,13 @@ class SocialMediaBot(ABC):
 
     def send_telegram_message(self, original_message, sentiment_data, summary, system_config):
         """
-        Sends messages to Telegram as a threaded conversation.
+        Sends a single, formatted message to a Telegram chat.
 
-        - The original post is sent first.
-        - The sentiment score is shown with appropriate emojis (🔥 for bullish, ❄️ for bearish).
-        - The direction (bullish/bearish) is included.
-        - The summary follows below.
+        The message is structured as follows:
+        - A line of emojis (🔥 for bullish, ❄️ for bearish) representing the sentiment.
+        - Two empty lines for spacing.
+        - The original post message.
+        - The summary of the post.
 
         Parameters:
             original_message (str): The initial Reddit post message.
@@ -120,73 +121,65 @@ class SocialMediaBot(ABC):
             summary (str): The summary text.
             system_config (dict): Configuration settings.
         """
-
         if not system_config.get("telegram_enabled", True):
             logging.info("Telegram notifications are disabled.")
             return
 
         TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
         TELEGRAM_CHAT_ID = system_config.get("telegram_chat_id", "")
+
+        if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID]):
+            logging.error("Telegram bot token or chat ID is not configured.")
+            return
+
         send_message_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-        # Send the original post message
-        original_payload = {"chat_id": TELEGRAM_CHAT_ID, "text": original_message}
-        response = requests.post(send_message_url, json=original_payload)
-
-        if response.status_code != 200:
-            logging.error(f"Telegram API error: {response.status_code} - {response.text}")
-            return
-
-        # Get the message_id of the original post for threading replies
-        message_data = response.json()
-        message_id = message_data.get("result", {}).get("message_id")
-
-        if not message_id:
-            logging.error("Failed to retrieve message_id for threading replies.")
-            return
-
-        # Convert sentiment score to appropriate emojis
+        # --- Process sentiment into the new emoji-only format ---
+        sentiment_header = ""
         try:
             if isinstance(sentiment_data, str):
-                sentiment_data = json.loads(sentiment_data)  # Convert string to dictionary
+                sentiment_data = json.loads(sentiment_data)
 
             if isinstance(sentiment_data, dict) and "sentiment" in sentiment_data and "direction" in sentiment_data:
                 sentiment_score = int(sentiment_data["sentiment"])
                 direction = sentiment_data["direction"].lower()
 
-                if direction == "bullish":
-                    sentiment_emoji = "🔥" * (sentiment_score // 10)
-                elif direction == "bearish":
-                    sentiment_emoji = "❄️" * (sentiment_score // 10)
-                else:
-                    sentiment_emoji = "❓"
+                # Determine the number of emojis based on the score (1 emoji per 10 points)
+                emoji_count = max(1, sentiment_score // 10)
 
-                sentiment_reply = f"{sentiment_emoji} ({sentiment_score}/100) - {direction.capitalize()}"
+                if direction == "bullish":
+                    sentiment_header = "🔥" * emoji_count
+                elif direction == "bearish":
+                    sentiment_header = "❄️" * emoji_count
+                else:
+                    sentiment_header = "❓"  # Fallback for unknown direction
             else:
                 raise ValueError("Invalid sentiment format")
 
         except (ValueError, KeyError, TypeError, json.JSONDecodeError) as e:
-            sentiment_reply = "❓ (Error processing sentiment)"
-            logging.error(f"Invalid sentiment data received: {sentiment_data} | Error: {e}")
+            sentiment_header = "❓"
+            logging.error(f"Could not process sentiment data: {sentiment_data} | Error: {e}")
 
-        # Combined reply message
-        combined_reply = f"{sentiment_reply}\n\n{summary}"
+        # --- Combine all parts into a single message ---
+        # Format: {Sentiment Emojis}\n\n{Original Post}\n\n{Summary}
+        full_message_text = f"{sentiment_header}\n\n{original_message}\n\n{summary}"
 
-        # Send reply
-        reply_payload = {
+        # --- Send the single, combined message ---
+        payload = {
             "chat_id": TELEGRAM_CHAT_ID,
-            "text": combined_reply,
-            "reply_to_message_id": message_id
+            "text": full_message_text,
+            "parse_mode": "Markdown"  # Optional: use 'HTML' or 'Markdown' if your text needs it
         }
 
         try:
-            response = requests.post(send_message_url, json=reply_payload)
-            if response.status_code != 200:
-                logging.error(f"Telegram API error: {response.status_code} - {response.text}")
-            else:
-                logging.info("Telegram reply sent successfully.")
-        except Exception as e:
-            logging.error(f"Error sending Telegram reply: {e}")
+            response = requests.post(send_message_url, json=payload)
+            response.raise_for_status()  # This will raise an HTTPError for bad responses (4xx or 5xx)
+            logging.info("Telegram message sent successfully.")
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Error sending Telegram message: {e}")
+            if e.response:
+                logging.error(f"Telegram API error details: {e.response.text}")
+
 
     @abstractmethod
     def check_reports(self, reports_list: List[str], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
