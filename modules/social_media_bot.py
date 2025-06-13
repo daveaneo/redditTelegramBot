@@ -34,38 +34,56 @@ class SocialMediaBot(ABC):
             user: str,
             submission: Any,
             openai_bot: Any,
-            system_config: Dict[str, Any]
+            system_config: Dict[str, Any],
+            social_score: Optional[str] = None
     ) -> None:
         """
-        Processes a significant post by performing follow-up analyses and sending messages to Telegram.
+        Processes a significant post and sends a neatly formatted message to Telegram.
 
         Args:
-            label (str): A label for the post (e.g., "Report" or "General post (significant)").
+            label (str): A label for the post (e.g., "Report").
             user (str): The username associated with the post.
-            submission (Any): The submission object.
+            submission (Any): The submission object from the source platform.
             openai_bot (Any): An instance of OpenAIBot for generating responses.
             system_config (Dict[str, Any]): System configuration parameters.
+            social_score (Optional[str]): A formatted string for the social score
+                                          (e.g., "2,500 karma" or "1.2M followers").
+                                          This line is omitted if not provided.
         """
         post_time = self._format_post_time(submission)
 
-        original_message = f"{label} from {user} at {post_time}:\n<a href='{submission.url}'>link</a>"
-        logging.info(original_message)
+        # --- Build the new, neatly formatted message ---
+        message_parts = []
+        message_parts.append(f"<b>Source:</b> {label}")
+        message_parts.append(f"<b>User:</b> {user}")
 
-        # Fetch sentiment
+        # Conditionally add the social score only if it exists
+        if social_score:
+            message_parts.append(f"<b>Social Score:</b> {social_score}")
+
+        message_parts.append(f"<b>Time:</b> {post_time}")
+
+        # Using a more descriptive link text improves clarity
+        link_html = f"<a href='{submission.url}'>View Original Post</a>"
+        message_parts.append(f"\n{link_html}")  # Add a newline for spacing
+
+        original_message = "\n".join(message_parts)
+        # --- End of message building ---
+
+        logging.info(f"Formatted message created:\n{original_message}")
+
+        # Fetch sentiment and summary (no changes here)
         sentiment = openai_bot.analyze_sentiment(
             submission.selftext,
             system_config.get("sentiment_char_limit", 100)
         )
-
-        # Fetch summary
         summary = openai_bot.summarize_text(
             submission.selftext,
             system_config.get("summary_char_limit", 100)
         )
 
-        # Call send_telegram_message with sentiment and summary
+        # Call send_telegram_message with the newly formatted original_message
         self.send_telegram_message(original_message, sentiment, summary, system_config)
-
 
     def send_heartbeat_message(self, system_config):
         """

@@ -80,7 +80,8 @@ class RedditBot(SocialMediaBot):
 
                         if not cache_manager.is_cached(submission.id):
                             cache_manager.add(submission.id)
-                            self.process_significant_message("Report", user, submission, openai_bot, system_config)
+                            social_score = f'{submission.author.link_karma} karma'
+                            self.process_significant_message("Report", user, submission, openai_bot, system_config, social_score)
                         else:
                             logging.debug(f"Report post {submission.id} already processed. Skipping.")
             except Exception as e:
@@ -115,10 +116,11 @@ class RedditBot(SocialMediaBot):
 
                             # Analyze post for significance.
                             significance = openai_bot.review_post(submission.selftext)
+                            social_score = f'{submission.author.link_karma} karma'
 
                             if "YES" in significance.upper():
                                 self.process_significant_message(
-                                    "General post (significant)", user, submission, openai_bot, system_config
+                                    "General post (significant)", user, submission, openai_bot, system_config, social_score
                                 )
                             else:
                                 logging.debug(f"General post {submission.id} from {user} deemed not significant.")
@@ -183,11 +185,13 @@ class RedditBot(SocialMediaBot):
                             sentiment_analysis = openai_bot.analyze_sentiment(submission.selftext, 100)
                             sentiment_score = self._extract_sentiment_score(sentiment_analysis)
 
+                            social_score = f'{author.link_karma} karma'
+
                             if sentiment_score >= sentiment_threshold:
                                 cache_manager.add(submission.id)
                                 self.process_significant_message(
                                     f"{subreddit} post (Flair: {target_flair})", author.name,
-                                    submission, openai_bot, system_config
+                                    submission, openai_bot, system_config, social_score
                                 )
                 else:
                     logging.debug(f"Subreddit post {submission.id} already processed. Skipping.")
