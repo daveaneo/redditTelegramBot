@@ -69,9 +69,9 @@ def send_daily_heartbeat():
     reddit_bot.send_heartbeat_message(system_config)
 
 # Schedule the checks every minute and cache cleanup every hour.
-schedule.every(3).minutes.do(run_reddit_checks)
+schedule.every(60).minutes.do(run_reddit_checks)
 schedule.every(1).hours.do(cleanup_cache)
-schedule.every().day.at("12:00").do(send_daily_heartbeat)  # Change time if needed
+schedule.every().day.at("12:00").do(send_daily_heartbeat)
 
 logging.info("Bot running... Press Ctrl+C to exit.")
 try:
