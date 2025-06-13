@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class SocialMediaBot(ABC):
