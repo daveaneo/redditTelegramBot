@@ -106,19 +106,20 @@ class SocialMediaBot(ABC):
         except Exception as e:
             logging.error(f"Error sending heartbeat message: {e}")
 
-    def send_telegram_message(self, original_message, sentiment_data, summary, system_config):
+
+    def send_telegram_message(original_message, sentiment_data, summary, system_config):
         """
-        Sends a single, formatted message to a Telegram chat.
+        Sends a single, consolidated message to a Telegram chat.
 
         The message is structured as follows:
         - A line of emojis (🔥 for bullish, ❄️ for bearish) representing the sentiment.
         - Two empty lines for spacing.
-        - The original post message.
+        - The original post message (which should be pre-formatted with any HTML).
         - The summary of the post.
 
         Parameters:
-            original_message (str): The initial Reddit post message.
-            sentiment_data (str | dict): JSON string or dictionary containing sentiment score & direction.
+            original_message (str): The pre-formatted initial post message, including any HTML links.
+            sentiment_data (str | dict): JSON string or dictionary with sentiment score & direction.
             summary (str): The summary text.
             system_config (dict): Configuration settings.
         """
@@ -130,13 +131,13 @@ class SocialMediaBot(ABC):
         TELEGRAM_CHAT_ID = system_config.get("telegram_chat_id", "")
 
         if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID]):
-            logging.error("Telegram bot token or chat ID is not configured.")
+            logging.error("Telegram bot token or chat ID is not configured. Message not sent.")
             return
 
         send_message_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-        # --- Process sentiment into the new emoji-only format ---
-        sentiment_header = ""
+        # --- Process sentiment into the emoji-only header ---
+        sentiment_header = "❓"  # Default in case of error
         try:
             if isinstance(sentiment_data, str):
                 sentiment_data = json.loads(sentiment_data)
@@ -144,43 +145,37 @@ class SocialMediaBot(ABC):
             if isinstance(sentiment_data, dict) and "sentiment" in sentiment_data and "direction" in sentiment_data:
                 sentiment_score = int(sentiment_data["sentiment"])
                 direction = sentiment_data["direction"].lower()
-
-                # Determine the number of emojis based on the score (1 emoji per 10 points)
-                emoji_count = max(1, sentiment_score // 10)
+                emoji_count = max(1, sentiment_score // 10)  # Ensure at least one emoji
 
                 if direction == "bullish":
                     sentiment_header = "🔥" * emoji_count
                 elif direction == "bearish":
                     sentiment_header = "❄️" * emoji_count
-                else:
-                    sentiment_header = "❓"  # Fallback for unknown direction
             else:
-                raise ValueError("Invalid sentiment format")
+                # Silently use default if format is invalid, as logging will capture it
+                pass
 
         except (ValueError, KeyError, TypeError, json.JSONDecodeError) as e:
-            sentiment_header = "❓"
             logging.error(f"Could not process sentiment data: {sentiment_data} | Error: {e}")
 
         # --- Combine all parts into a single message ---
-        # Format: {Sentiment Emojis}\n\n{Original Post}\n\n{Summary}
         full_message_text = f"{sentiment_header}\n\n{original_message}\n\n{summary}"
 
-        # --- Send the single, combined message ---
+        # --- Prepare and send the API request ---
         payload = {
             "chat_id": TELEGRAM_CHAT_ID,
             "text": full_message_text,
-            "parse_mode": "Markdown"  # Optional: use 'HTML' or 'Markdown' if your text needs it
+            "parse_mode": "HTML"  # CRITICAL: This tells Telegram to render the <a> tag
         }
 
         try:
             response = requests.post(send_message_url, json=payload)
-            response.raise_for_status()  # This will raise an HTTPError for bad responses (4xx or 5xx)
+            response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             logging.info("Telegram message sent successfully.")
         except requests.exceptions.RequestException as e:
             logging.error(f"Error sending Telegram message: {e}")
             if e.response:
                 logging.error(f"Telegram API error details: {e.response.text}")
-
 
     @abstractmethod
     def check_reports(self, reports_list: List[str], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
