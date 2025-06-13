@@ -47,7 +47,8 @@ class SocialMediaBot(ABC):
             system_config (Dict[str, Any]): System configuration parameters.
         """
         post_time = self._format_post_time(submission)
-        original_message = f"{label} from {user} at {post_time}:\n{submission.url}"
+
+        original_message = f"{label} from {user} at {post_time}:\n<a href='{submission.url}'>link</a>"
         logging.info(original_message)
 
         # Fetch sentiment
