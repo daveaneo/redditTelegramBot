@@ -73,6 +73,9 @@ schedule.every(60).minutes.do(run_reddit_checks)
 schedule.every(1).hours.do(cleanup_cache)
 schedule.every().day.at("12:00").do(send_daily_heartbeat)
 
+# temporary hourly checkin
+schedule.every(1).hours.do(send_daily_heartbeat)
+
 logging.info("Bot running... Press Ctrl+C to exit.")
 try:
     # Initial run
