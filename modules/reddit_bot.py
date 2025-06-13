@@ -81,7 +81,7 @@ class RedditBot(SocialMediaBot):
                         if not cache_manager.is_cached(submission.id):
                             cache_manager.add(submission.id)
                             social_score = f'{submission.author.link_karma} karma'
-                            self.process_significant_message("Report", user, submission, openai_bot, system_config, social_score)
+                            self.process_significant_message("Reddit: report", user, submission, openai_bot, system_config, social_score)
                         else:
                             logging.debug(f"Report post {submission.id} already processed. Skipping.")
             except Exception as e:
@@ -120,7 +120,7 @@ class RedditBot(SocialMediaBot):
 
                             if "YES" in significance.upper():
                                 self.process_significant_message(
-                                    "General post (significant)", user, submission, openai_bot, system_config, social_score
+                                    "Reddit: general", user, submission, openai_bot, system_config, social_score
                                 )
                             else:
                                 logging.debug(f"General post {submission.id} from {user} deemed not significant.")
@@ -190,7 +190,7 @@ class RedditBot(SocialMediaBot):
                             if sentiment_score >= sentiment_threshold:
                                 cache_manager.add(submission.id)
                                 self.process_significant_message(
-                                    f"{subreddit} post (Flair: {target_flair})", author.name,
+                                    f"Reddit: {subreddit}", author.name,
                                     submission, openai_bot, system_config, social_score
                                 )
                 else:
