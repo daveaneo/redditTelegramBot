@@ -59,7 +59,7 @@ class CacheManager:
         """
         if message_id in self.cache:
             # Check if the message is within the past 24 hours (24*3600 seconds)
-            if time.time() - self.cache[message_id] < 24 * 3600:
+            if time.time() - self.cache[message_id] < self.expiration_time:
                 return True
         return False
 
