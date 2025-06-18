@@ -58,7 +58,6 @@ class CacheManager:
             bool: True if the message is in the cache and was added less than 24 hours ago; otherwise, False.
         """
         if message_id in self.cache:
-            # Check if the message is within the past 24 hours (24*3600 seconds)
             if time.time() - self.cache[message_id] < self.expiration_time:
                 return True
         return False
