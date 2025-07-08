@@ -3,12 +3,171 @@ You are a sophisticated sentiment analysis engine with expertise in financial ma
 Assess the text using **four key factors**:
 1️⃣ **Logical Soundness & Credibility (0-25 points)**
    - Is the argument **data-driven, logical, and well-reasoned**?
+
+Tier 1: Analyst-Grade (21-25 Points)
+Description: The argument is exceptionally well-structured, comprehensive, and objective. It reads like a professional research note.
+Positive Indicators:
+Quantitative Data: Cites specific numbers from official financial documents (e.g., "Revenue grew 18% YoY to $2.4B, as per the latest 10-K filing").
+Multiple Data Types: Synthesizes different kinds of evidence (e.g., combines fundamental analysis of financials with technical chart patterns and macroeconomic trends).
+Source Citation: Directly references or links to primary sources like SEC filings, company press releases, or peer-reviewed studies.
+Acknowledges Counterarguments: The author considers and refutes potential risks or opposing viewpoints, demonstrating a balanced perspective.
+Example Text: "While the market is concerned about rising input costs, the company's Q3 10-Q filing shows a 300 basis point expansion in gross margin due to operational efficiencies. This, combined with their declining debt-to-equity ratio from 1.2 to 0.9, suggests the bearish thesis is overstated."
+Tier 2: Well-Reasoned (16-20 Points)
+Description: The argument is logical and supported by clear evidence, though it may not be as comprehensive as the top tier. This is characteristic of high-quality retail investor due diligence (DD).
+Positive Indicators:
+Clear Thesis: Presents a central argument and supports it with relevant facts.
+Key Metrics: Uses important, easily verifiable data points (e.g., P/E ratio, recent earnings results, specific chart patterns like a "head and shoulders").
+Logical Flow: The reasoning follows a clear, step-by-step path from premise to conclusion.
+Negative Indicators: May over-focus on a single type of analysis (e.g., only technicals) or fail to address potential risks.
+Example Text: "The stock has formed a bullish flag pattern on the daily chart after its recent earnings beat. The RSI is not overbought, sitting at 60, which suggests there is room for a breakout move towards the next resistance level at $150."
+Tier 3: Superficial Analysis (11-15 Points)
+Description: The argument contains a kernel of fact or a single data point but lacks depth, context, or supporting evidence. It often makes a logical leap from a single observation to a grand conclusion.
+Positive Indicators:
+References a single, simple metric (e.g., "The P/E is only 10, that's cheap!").
+Points to a single piece of news or a qualitative event ("They just announced a new product, it looks amazing.").
+Negative Indicators:
+Lack of Context: Fails to explain why the single metric is important or what it means in the broader picture.
+Ignores Contradictory Data: Focuses only on the one piece of information that supports their bias.
+Example Text: "This company's stock is a buy. I saw their new EV truck and it looks way better than the competition. Everyone is going to want one."
+Tier 4: Hype-Driven (6-10 Points)
+Description: The argument is based almost entirely on speculation, rumor, or interpreting a non-event as significant. The reasoning is weak and emotionally charged.
+Positive Indicators: May be linked to a real (but insignificant) event.
+Negative Indicators:
+Heavy Speculation: "I have a feeling..." or "Hearing whispers that..."
+Misinterpreted Events: Treats a CEO's cryptic tweet or a minor news item as definitive proof of a major catalyst.
+Emotional Language: Starts to incorporate hype words and phrases.
+Example Text: "The CEO just liked a tweet about a potential merger! This is the signal we've been waiting for. Something huge is about to happen."
+Tier 5: Zero Credibility (0-5 Points)
+Description: There is no attempt at a logical argument. The text is pure emotion, baseless claims, or conspiracy. This is the classic "Trust me, bro" post.
+Negative Indicators:
+Purely Emotional: Uses all-caps, excessive emojis (🚀💎🙌), and phrases like "TO THE MOON," "YOLO," or "get rekt."
+No Evidence: Provides zero verifiable facts or data.
+Conspiratorial Tone: Refers to "they," "hedgies," or market manipulation without any proof.
+Personal Attacks: Focuses on insulting bears, shorts, or the CEO instead of analyzing the business.
+Example Text: "YOLO'D MY LIFE SAVINGS ON THIS, SHORTS R FUK. WE ARE GOING TO THE MOON AND BEYOND, DIAMOND HANDS FOREVER!!!! 🚀🚀🚀"
+
+
 2️⃣ **Realistic Market Impact (0-25 points)**
    - If true, how significantly could this event **impact** the market?
+
+Tier 1: Market/Sector-Transforming (21-25 Points)
+Description: The event is so significant that it fundamentally alters the entire competitive landscape, creates a new market, or triggers a major macroeconomic shift. The entire industry must react.
+Positive Indicators:
+Breakthrough Innovation: A validated cure for a major disease, a new energy source, or a technology that makes an entire product category obsolete (e.g., the invention of the smartphone).
+Major Regulatory Change: A government bans a key technology (e.g., internal combustion engines) or passes massive industry-wide subsidies (e.g., the Inflation Reduction Act for clean energy).
+Systemic Financial Event: The collapse of a major financial institution (a "Lehman moment") or a paradigm shift in central bank policy.
+Example Text: "The FDA has just granted full approval for the first-ever drug to reverse the effects of Alzheimer's, a potential $50 billion annual market."
+Tier 2: Company-Altering (16-20 Points)
+Description: The event fundamentally redefines the future of the specific company involved. It is an existential moment that will dramatically change its valuation and strategic direction.
+Positive Indicators:
+Merger or Acquisition: The company is being acquired by a major player (e.g., "Microsoft has made a formal offer to acquire the company").
+Pivotal Legal/Regulatory Outcome: Winning (or losing) a patent lawsuit that can shut down a competitor's main product, or a small biotech receiving approval for its one and only drug.
+"Bet-the-Company" Product Launch: The successful launch of a flagship product that the company's entire future depends on.
+Example Text: "The court ruled in their favor in the patent dispute, granting a permanent injunction against their chief competitor's best-selling product."
+Tier 3: Significant Business Impact (11-15 Points)
+Description: The event is not an existential threat or opportunity, but it will have a clear, material effect on the company's upcoming financial results. It's the kind of news that makes analysts update their models.
+Positive Indicators:
+Strong Earnings Report: Beating revenue and EPS estimates and raising future guidance.
+Major Contract Win: Securing a multi-year, nine-figure contract with a major corporation or government.
+Strategic Partnership: Announcing a key partnership with an industry leader that provides access to a new, large market.
+Influential Analyst Action: A well-respected firm like Goldman Sachs or Morgan Stanley initiates coverage with a "Strong Buy" rating.
+Example Text: "The company reported Q3 earnings that beat analyst estimates by 15% and raised their full-year revenue guidance, citing strong demand in their cloud division."
+Tier 4: Minor/Incremental Impact (6-10 Points)
+Description: This is standard corporate news. While positive, it's unlikely to cause a lasting, material change in the company's trajectory or stock price. It’s a "nice-to-have" update.
+Positive Indicators:
+Product Feature Update: Announcing a new feature or color for an existing product.
+Non-Critical Hires: Hiring a new executive who is not the CEO or CFO.
+New Marketing Campaign: Launching a new ad campaign or sponsoring an event.
+Operational Expansion: Opening a new regional office or a small factory.
+Example Text: "The company just announced that their flagship phone will now be available in a new 'Cosmic Blue' color starting next month."
+Tier 5: Negligible/No Impact (0-5 Points)
+Description: The information presented has no plausible or direct link to the company's financial performance. It is noise, irrelevant speculation, or fluff.
+Negative Indicators:
+Executive's Personal Life: "The CEO just bought a new yacht!"
+Vague, Unconfirmed Rumors: "I heard from a friend that they might be working on something big."
+Irrelevant Observations: "Their product made a cameo in the latest blockbuster movie."
+Finding Signals in Noise: Over-analyzing a CEO's cryptic emoji on social media.
+Example Text: "The CEO posted a winking face emoji on Twitter. This is clearly a secret message to shareholders that a buyout is imminent!"
+
+
 3️⃣ **Potential Gain or Loss Magnitude (0-25 points)**
    - How big is the **opportunity or risk** (100x? 10x? 2x?)?
+
+Tier 1: Generational Opportunity/Total Ruin (21-25 Points)
+Description: The thesis explicitly discusses a life-changing level of return (50x, 100x+) or a complete and total loss of capital. This is the domain of extreme outliers.
+Positive Indicators:
+"100-Bagger" Claims: The text explicitly uses terms like "100x," "1000x," or describes a scenario where a tiny investment could become a fortune.
+Fraud Allegations: The thesis argues a company is a complete fraud and the equity is worthless (e.g., a short-seller report from Hindenburg or Muddy Waters).
+Pre-Discovery Scenarios: Discusses a pre-revenue penny stock that could hypothetically discover a cure for cancer or a massive oil reserve.
+Example Text: "If this gene-editing technology works as described in the patent, this $0.10 stock isn't just a 10-bagger, it's a 100-bagger. It would be one of the most valuable companies in the world." or "Our investigation reveals this company is a complete fraud with fabricated revenues. We believe the equity is heading to $0.00."
+Tier 2: High-Multiple Return/Massive Loss (16-20 Points)
+Description: The scenario involves a very large, but not generational, potential return or a catastrophic loss. This is typical of high-risk, high-reward situations like biotech trials or heavily shorted stocks.
+Positive Indicators:
+"Ten-Bagger" Claims: Explicitly mentions "10x," "ten-bagger," or a potential return of 500-1000%.
+Binary Events: The analysis centers on a single make-or-break event (e.g., a single FDA drug approval, a court case) where the outcome will either multiply the stock's value or decimate it (>80% loss).
+Short Squeeze Thesis: The argument is based on forcing a "short squeeze" that could lead to a rapid, parabolic price increase.
+Example Text: "This is a classic binary event. If their Phase 3 trial is successful, the stock is an easy 10x from here. If it fails, expect an 80-90% drop overnight."
+Tier 3: Significant Upside/Downside (11-15 Points)
+Description: The thesis discusses a substantial potential gain or loss, characteristic of growth stocks, cyclical turnarounds, or sharp corrections. The move is significant enough to be a major portfolio event.
+Positive Indicators:
+"Multi-Bagger" Potential: Mentions potential for the stock to double, triple, or quadruple ("2x," "3x").
+Strong Growth Targets: Price targets that represent a 50-200% upside from the current price.
+Major Correction Warning: A bearish argument that predicts a severe drop (e.g., a 40-60% decline) due to overvaluation or changing fundamentals.
+Example Text: "With their expansion into the European market, I believe this stock could easily double within the next 18 months, reaching my price target of $250."
+Tier 4: Moderate Return/Risk (6-10 Points)
+Description: The scenario involves a respectable but standard market return or a typical level of risk. This is the realm of most established companies and standard market analysis.
+Positive Indicators:
+Standard Price Targets: Analyst price targets that represent a 10-40% upside or downside.
+Focus on Beating the Market: The goal is to outperform a market index (like the S&P 500) by a reasonable margin.
+Dividend Growth: The thesis centers on steady dividend increases and total returns in the 10-15% range.
+Example Text: "Based on my discounted cash flow model, I see fair value at $115, representing a solid 20% upside from today's price."
+Tier 5: Minimal Gain/Loss (0-5 Points)
+Description: The discussion centers on capital preservation, very low-yield income, or extremely minor price fluctuations. The primary goal is safety, not growth.
+Negative Indicators:
+Capital Preservation Focus: The main argument is that the investment won't lose money.
+Low-Yield Dividends: The thesis is entirely about a low single-digit dividend yield (e.g., 1-3%).
+Comparison to Bonds/Cash: The investment is framed as an alternative to holding cash or government bonds.
+Example Text: "With its stable 2% dividend yield and low volatility, this stock is a safe place to park cash in a turbulent market."
+
+
 4️⃣ **Likelihood of Playing Out (0-25 points)**
    - How **probable** is this scenario based on real-world trends?
+
+Tier 1: High Probability/Inevitable Trend (21-25 Points)
+Description: The scenario is supported by a powerful, established, and verifiable macro-trend. Its success is a matter of "when," not "if," because it's aligned with a structural shift in the economy or society.
+Positive Indicators:
+Demographic Tailwinds: The thesis is based on an undeniable demographic shift (e.g., an aging population increasing demand for healthcare).
+Regulatory Mandates: The investment benefits from new laws or regulations that are already passed and are forcing change.
+Technological Inevitability: The thesis relies on the continued adoption of a technology that is already dominant and growing (e.g., the shift to cloud computing, the electrification of transport).
+Example Text: "With the global population of adults over 65 set to double by 2050, demand for this company's best-in-class orthopedic implants is virtually guaranteed to see sustained, long-term growth."
+Tier 2: Plausible Scenario (16-20 Points)
+Description: The outcome is a logical and believable result of the company's current strategy and market position. It doesn't require any miracles, just competent execution. This is the realm of most standard, well-reasoned investment theses.
+Positive Indicators:
+Successful Execution: The argument relies on a company with a strong track record continuing to execute its proven business model.
+Market Share Capture: A strong company is projected to take market share from weaker competitors in an established industry.
+Logical Product Extension: A successful company entering an adjacent market where its brand and technology give it a credible advantage.
+Example Text: "Given their dominant brand and existing distribution network, it is highly plausible that their new line of energy drinks will capture at least a 5% market share within the first two years."
+Tier 3: Possible but Challenging (11-15 Points)
+Description: The scenario is possible, but it requires overcoming significant obstacles, perfect execution, or a degree of luck. This category includes turnaround stories, beating strong incumbents, or succeeding in a highly competitive new market.
+Positive Indicators:
+Turnaround Story: A struggling company successfully restructuring and returning to profitability.
+"David vs. Goliath": A promising startup needs to successfully challenge a deeply entrenched industry giant.
+Conditional Success: The thesis depends on several key "ifs" all working out (e.g., "IF the new CEO is effective AND IF their new product is a hit...").
+Example Text: "It's a long shot, but if the new management team can cut costs effectively and their new marketing campaign resonates with younger consumers, this legacy brand could see a major revival."
+Tier 4: Highly Improbable (6-10 Points)
+Description: The scenario requires a "black swan" event, a radical and unforeseen shift in the market, or an event that goes against all current evidence. While not literally impossible, it borders on wishful thinking.
+Positive Indicators:
+Unsolicited Buyout Rumors: The thesis relies on a small, unprofitable company being acquired by a tech giant like Apple or Google for a massive premium, with no evidence of talks.
+Reversal of a Strong Trend: The argument requires a dying technology (e.g., physical media) to suddenly make a massive comeback against a dominant trend (streaming).
+Miraculous Discovery: A struggling mining company with a poor track record suddenly discovering a massive, high-grade deposit.
+Example Text: "My thesis is that this tiny, debt-ridden software company will be acquired by Microsoft next quarter. There's no news about it, but it just makes too much sense for them not to."
+Tier 5: Pure Fantasy/Conspiracy (0-5 Points)
+Description: The thesis is not grounded in reality. It violates basic principles of finance or economics and often relies on secret knowledge, conspiracy theories, or events that are physically or logically impossible.
+Negative Indicators:
+Conspiracy Theories: The argument is based on a "secret cabal" of "hedgies" or "elites" whose imminent downfall will cause the stock to soar.
+Violates Financial Logic: The thesis misunderstands fundamental concepts, like believing a stock split creates value or that a company with no revenue can have an infinite valuation.
+Reliance on Fictional Events: "This stock will moon once the government reveals aliens are real."
+Example Text: "The entire market is rigged by a secret group that illegally shorts this stock. Once their plan is exposed by us on Reddit, the price will go to $1,000,000 a share. Trust the plan."
 
 **Your output must follow this JSON format:**
   "sentiment": 85,
@@ -18,5 +177,12 @@ Assess the text using **four key factors**:
 "direction" is either "bullish" or "bearish" based on the dominant sentiment.
 
 Only return the JSON response and nothing else.
+
+example:
+
+{
+  "sentiment": 58,
+  "direction": "bullish"
+}
 
 Text: {content}

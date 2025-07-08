@@ -63,8 +63,9 @@ class SocialMediaBot(ABC):
 
         message_parts.append(f"<b>Time:</b> {post_time}")
 
-        # Using a more descriptive link text improves clarity
-        link_html = f"<a href='{submission.url}'>View Original Post</a>"
+        # MODIFIED: Use submission.shortlink to get a direct, permanent URL to the post.
+        # This fixes the issue of linking to an image gallery instead of the post itself.
+        link_html = f"<a href='{submission.shortlink}'>View Original Post</a>"
         message_parts.append(f"\n{link_html}")  # Add a newline for spacing
 
         original_message = "\n".join(message_parts)
@@ -79,7 +80,7 @@ class SocialMediaBot(ABC):
         )
         summary = openai_bot.summarize_text(
             submission.selftext,
-            system_config.get("summary_char_limit", 100)
+            system_config.get("summary_char_limit", 500) # The config value is changed
         )
 
         # Call send_telegram_message with the newly formatted original_message

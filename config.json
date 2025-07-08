@@ -21,7 +21,7 @@
   },
   "system": {
     "sentiment_char_limit": 100,
-    "summary_char_limit": 100,
+    "summary_char_limit": 500,
     "telegram_enabled": true,
     "telegram_chat_id": "-1002443753037",
     "telegram_heartbeat_recipient": "504186992",
