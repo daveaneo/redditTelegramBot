@@ -1,3 +1,5 @@
+# FILE: openai_bot.py
+
 import os
 import time
 import logging
@@ -7,14 +9,14 @@ from openai import OpenAI  # Assumes your OpenAI library provides this class
 
 class OpenAIBot:
     """
-    A bot that interfaces with OpenAI's API using external prompt templates and function calling.
+    A bot that interfaces with OpenAI's API using external prompt templates and tool calling.
 
     This class loads three prompt templates from files:
       - A review post prompt,
       - A sentiment analysis prompt,
       - And a summarization prompt.
 
-    For the review and sentiment methods, we use OpenAI's function calling feature to force
+    For the review and sentiment methods, we use OpenAI's tool calling feature to force
     the output into a specific JSON format.
     """
 
@@ -59,48 +61,54 @@ class OpenAIBot:
             self.summarization_prompt_template = ""
 
     def generate_response(
-        self,
-        prompt: str,
-        max_tokens: int = 50,
-        temperature: float = 0.7,
-        model: str = "gpt-4o-mini",
-        functions: Optional[List[Dict[str, Any]]] = None
+            self,
+            prompt: str,
+            max_tokens: int = 50,
+            temperature: float = 0.7,
+            model: str = "gpt-4o-mini",
+            tools: Optional[List[Dict[str, Any]]] = None  # MODIFIED: from 'functions' to 'tools'
     ) -> str:
         """
-        Generate a response from OpenAI's model using the provided prompt and optional function calling.
+        Generate a response from OpenAI's model using the provided prompt and optional tool calling.
 
         Args:
             prompt (str): The prompt to send to the model.
             max_tokens (int): Maximum number of tokens for the response.
             temperature (float): Sampling temperature.
             model (str): The model name to use. Ensure your API key is permitted for this model.
-            functions (Optional[List[Dict[str, Any]]]): A list of function specifications to force structured output.
+            tools (Optional[List[Dict[str, Any]]]): A list of tool specifications to force structured output.
 
         Returns:
-            str: The generated response text (or the function call arguments if functions are provided),
+            str: The generated response text (or the tool call arguments if tools are provided),
                  or "ERROR" if an error occurs.
         """
         try:
-            chat_completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=model,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                functions=functions,
-                function_call="auto" if functions else None
-            )
+            # MODIFIED: Updated API call to use 'tools' and 'tool_choice'
+            call_params = {
+                "messages": [{"role": "user", "content": prompt}],
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+            if tools:
+                call_params["tools"] = tools
+                call_params["tool_choice"] = "auto"
+
+            chat_completion = self.client.chat.completions.create(**call_params)
+
             message = chat_completion.choices[0].message
-            if functions and hasattr(message, "function_call") and message.function_call:
-                # Use dot notation to access the arguments attribute
-                response = message.function_call.arguments
+
+            # MODIFIED: Updated response parsing logic for tool_calls
+            if tools and message.tool_calls:
+                response = message.tool_calls[0].function.arguments
             else:
                 response = message.content
+
             time.sleep(1)  # Sleep to manage rate limits.
-            return response.strip()
+            return response.strip() if response else "ERROR"
         except Exception as e:
             logging.error(f"Error during OpenAI API call: {e}")
             return "ERROR"
-
 
     def review_post(self, post_content: str) -> str:
         """
@@ -114,31 +122,35 @@ class OpenAIBot:
             str: The JSON response from the model.
         """
         prompt: str = self.review_prompt_template.format(content=post_content)
-        review_function = [{
-            "name": "review_post",
-            "description": "Return a JSON object indicating if the post is significant along with an explanation.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "is_significant": {
-                        "type": "boolean",
-                        "description": "True if the post is market-moving, false otherwise."
+        # MODIFIED: Updated function definition to the 'tools' format
+        review_tool = [{
+            "type": "function",
+            "function": {
+                "name": "review_post",
+                "description": "Return a JSON object indicating if the post is significant along with an explanation.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "is_significant": {
+                            "type": "boolean",
+                            "description": "True if the post is market-moving, false otherwise."
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "A brief explanation of the decision."
+                        }
                     },
-                    "explanation": {
-                        "type": "string",
-                        "description": "A brief explanation of the decision."
-                    }
-                },
-                "required": ["is_significant", "explanation"]
+                    "required": ["is_significant", "explanation"]
+                }
             }
         }]
         return self.generate_response(prompt, max_tokens=100, temperature=0.5, model="gpt-4o-mini",
-                                      functions=review_function)
+                                      tools=review_tool)
 
     def analyze_sentiment(self, post_content: str, character_limit: int) -> str:
         """
         Generates a sentiment analysis focusing on bullish sentiment with a specified character limit.
-        Forces output into a JSON structure with a single key "sentiment" that is an integer between 0 and 100.
+        Forces output into a JSON structure with keys "sentiment" and "direction".
 
         Args:
             post_content (str): The text to analyze.
@@ -147,31 +159,46 @@ class OpenAIBot:
         Returns:
             str: The JSON response from the model.
         """
+
+        print('before prompt')
+        print(f"--- DEBUG: TEMPLATE IS: {repr(self.sentiment_prompt_template)} ---")
+
         prompt: str = self.sentiment_prompt_template.format(character_limit=character_limit, content=post_content)
-        sentiment_function = [{
-            "name": "analyze_sentiment",
-            "description": "Return a JSON object with a sentiment rating between 0 and 100, along with the market direction (bullish, bearish, or neutral).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "sentiment": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 100,
-                        "description": "Sentiment rating from 0 (no significant sentiment) to 100 (extremely strong sentiment)."
+        print('after prompt')
+
+        print(f'prompt: {prompt}')
+
+        # MODIFIED: Updated function definition to the 'tools' format
+        sentiment_tool = [{
+            "type": "function",
+            "function": {
+                "name": "analyze_sentiment",
+                "description": "Return a JSON object with a sentiment rating between 0 and 100, along with the market direction (bullish, bearish, or neutral).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "sentiment": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100,
+                            "description": "Sentiment rating from 0 (no significant sentiment) to 100 (extremely strong sentiment)."
+                        },
+                        "direction": {
+                            "type": "string",
+                            "enum": ["bullish", "bearish", "neutral"],
+                            "description": "The overall market direction conveyed in the text: bullish (positive opportunity), bearish (negative outlook), or neutral (not significant)."
+                        }
                     },
-                    "direction": {
-                        "type": "string",
-                        "enum": ["bullish", "bearish", "neutral"],
-                        "description": "The overall market direction conveyed in the text: bullish (positive opportunity), bearish (negative outlook), or neutral (not significant)."
-                    }
-                },
-                "required": ["sentiment", "direction"]
+                    "required": ["sentiment", "direction"]
+                }
             }
         }]
 
+        print(f'sentiment_tool: {sentiment_tool}')
+
+
         return self.generate_response(prompt, max_tokens=character_limit, temperature=0.7, model="gpt-4o-mini",
-                                      functions=sentiment_function)
+                                      tools=sentiment_tool)
 
     def summarize_text(self, post_content: str, character_limit: int) -> str:
         """

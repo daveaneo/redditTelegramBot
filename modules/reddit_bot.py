@@ -1,4 +1,7 @@
+# FILE: reddit_bot.py
+
 import praw
+import prawcore # IMPORT THIS
 import os
 import logging
 import json
@@ -21,38 +24,6 @@ class RedditBot(SocialMediaBot):
         )
         # Track processed posts to avoid duplicate processing.
         self.processed_posts = set()
-
-    # def check_reports(
-    #         self,
-    #         reports_list: List[str],
-    #         openai_bot: Any,
-    #         cache_manager: Any,
-    #         system_config: Dict[str, Any]
-    # ) -> None:
-    #     """
-    #     Processes posts from 'reports' users.
-    #
-    #     Posts are forwarded directly with follow-up analyses.
-    #
-    #     Args:
-    #         reports_list (List[str]): List of Reddit usernames for reports.
-    #         openai_bot (Any): Instance of OpenAIBot.
-    #         cache_manager (Any): Instance of CacheManager.
-    #         system_config (Dict[str, Any]): System configuration parameters.
-    #     """
-    #     for user in reports_list:
-    #         try:
-    #             for submission in self.client.redditor(user).submissions.new(limit=1):
-    #                 logging.debug(f"Processing submission: {submission.id}")
-    #                 if not cache_manager.is_cached(submission.id):
-    #                     cache_manager.add(submission.id)
-    #                     self.process_significant_message("Report", user, submission, openai_bot, system_config)
-    #                 else:
-    #                     logging.debug(f"Report post {submission.id} already processed. Skipping.")
-    #         except Exception as e:
-    #             logging.error(f"Error processing report from {user}: {e}")
-
-    import time
 
     def check_reports(
             self,
@@ -80,10 +51,13 @@ class RedditBot(SocialMediaBot):
 
                         if not cache_manager.is_cached(submission.id):
                             cache_manager.add(submission.id)
-                            social_score = f'{submission.author.link_karma} karma'
+                            social_score = f'{submission.author.link_karma:,} karma' # Added comma for readability
                             self.process_significant_message("Reddit: report", user, submission, openai_bot, system_config, social_score)
                         else:
                             logging.debug(f"Report post {submission.id} already processed. Skipping.")
+            # MODIFIED: Added specific exception for 'Not Found' error
+            except prawcore.exceptions.NotFound:
+                logging.warning(f"Reddit user '{user}' not found. Skipping.")
             except Exception as e:
                 logging.error(f"Error processing report from {user}: {e}")
 
@@ -115,10 +89,19 @@ class RedditBot(SocialMediaBot):
                             cache_manager.add(submission.id)
 
                             # Analyze post for significance.
-                            significance = openai_bot.review_post(submission.selftext)
-                            social_score = f'{submission.author.link_karma} karma'
+                            # MODIFIED: Parse the JSON response from review_post
+                            significance_json = openai_bot.review_post(submission.selftext)
+                            try:
+                                significance_data = json.loads(significance_json)
+                                is_significant = significance_data.get("is_significant", False)
+                            except (json.JSONDecodeError, TypeError):
+                                is_significant = False
+                                logging.error(f"Could not parse significance JSON: {significance_json}")
 
-                            if "YES" in significance.upper():
+
+                            social_score = f'{submission.author.link_karma:,} karma' # Added comma for readability
+
+                            if is_significant:
                                 self.process_significant_message(
                                     "Reddit: general", user, submission, openai_bot, system_config, social_score
                                 )
@@ -126,6 +109,8 @@ class RedditBot(SocialMediaBot):
                                 logging.debug(f"General post {submission.id} from {user} deemed not significant.")
                         else:
                             logging.debug(f"General post {submission.id} already processed. Skipping.")
+            except prawcore.exceptions.NotFound:
+                logging.warning(f"Reddit user '{user}' not found. Skipping.")
             except Exception as e:
                 logging.error(f"Error processing general post from {user}: {e}")
 
@@ -134,44 +119,39 @@ class RedditBot(SocialMediaBot):
             sources: Dict[str, Any],
             openai_bot: Any,
             cache_manager: Any,
-            system_config: Dict[str, Any]
+            # CHANGE THIS: from system_config to config
+            config: Dict[str, Any]
     ) -> None:
         """
-        Processes additional sources beyond 'reports' and 'general' users.
-
-        Args:
-            sources (Dict[str, Any]): A dictionary containing additional sources (e.g., subreddits).
-            openai_bot (Any): Instance of OpenAIBot.
-            cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
+        Processes additional sources...
         """
         for subreddit_name in sources.get("subreddits", {}):
-            self.check_subreddit_posts(subreddit_name, openai_bot, cache_manager, system_config)
+            # Pass the full config object down
+            self.check_subreddit_posts(subreddit_name, openai_bot, cache_manager, config)
 
     def check_subreddit_posts(
             self,
             subreddit: str,
             openai_bot: Any,
             cache_manager: Any,
-            system_config: Dict[str, Any]
+            # CHANGE THIS: from system_config to config
+            config: Dict[str, Any]
     ) -> None:
         """
-        Processes posts from a specific subreddit that contain a target flair (e.g., "DD").
-        Filters posts based on author karma and sentiment analysis.
-
-        Args:
-            subreddit (str): The subreddit name to scan.
-            openai_bot (Any): Instance of OpenAIBot.
-            cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
+        Processes posts from a specific subreddit...
         """
-        subreddit_config = system_config.get("platforms", {}).get("reddit", {}).get("subreddits", {}).get(subreddit, {})
+        # CORRECTED: Get the system config from the full config object
+        system_config = config.get("system", {})
 
+        # CORRECTED: Get the subreddit config from the full config object
+        subreddit_config = config.get("platforms", {}).get("reddit", {}).get("subreddits", {}).get(subreddit, {})
+
+        # Now these lines will correctly load your values (2000 and 50)
         target_flair = subreddit_config.get("target_flair", "DD")
         min_karma = subreddit_config.get("min_karma", 1000)
         sentiment_threshold = subreddit_config.get("sentiment_threshold", 50)
 
-        logging.info(f"Checking subreddit: {subreddit} for flair: {target_flair}")
+        logging.info(f"Checking subreddit: {subreddit} for flair: '{target_flair}' with min_karma: {min_karma}")
 
         try:
             query = f"flair:'{target_flair}'"
@@ -179,13 +159,14 @@ class RedditBot(SocialMediaBot):
 
             for submission in submissions:
                 if not cache_manager.is_cached(submission.id):
+                    # (The rest of the logic is correct)
                     if submission.link_flair_text and submission.link_flair_text.lower() == target_flair.lower():
                         author = submission.author
-                        if author and author.link_karma >= min_karma:
+                        if author and author.link_karma >= min_karma:  # This check will now use 2000
                             sentiment_analysis = openai_bot.analyze_sentiment(submission.selftext, 100)
                             sentiment_score = self._extract_sentiment_score(sentiment_analysis)
 
-                            social_score = f'{author.link_karma} karma'
+                            social_score = f'{author.link_karma:,} karma'
 
                             if sentiment_score >= sentiment_threshold:
                                 cache_manager.add(submission.id)

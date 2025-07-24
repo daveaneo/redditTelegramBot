@@ -97,7 +97,7 @@ class SocialMediaBot(ABC):
             logging.info("Telegram notifications are disabled.")
             return
 
-        print(system_config)
+        # print(system_config)
 
         TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
         TELEGRAM_CHAT_ID = system_config.get("telegram_heartbeat_recipient", "")
@@ -207,34 +207,29 @@ class SocialMediaBot(ABC):
         raise NotImplementedError("Subclasses must implement check_general()")
 
     @abstractmethod
-    def process_other_sources(self, sources: Dict[str, Any], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
+    def process_other_sources(self, sources: Dict[str, Any], openai_bot: Any, cache_manager: Any, config: Dict[str, Any]) -> None:
+        # CHANGE THIS: from system_config to config
         """
         Processes additional sources not covered by reports or general categories.
-
-        Args:
-            sources (Dict[str, Any]): A dictionary of additional sources (e.g., subreddits for Reddit).
-            openai_bot (Any): Instance of OpenAIBot.
-            cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
         """
+        raise NotImplementedError("Subclasses must implement process_other_sources()")
 
-    def run(self, sources: Dict[str, Any], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
+    def run(self, sources: Dict[str, Any], openai_bot: Any, cache_manager: Any, config: Dict[str, Any]) -> None:
         """
         Runs checks for reports, general posts, and additional sources.
-
-        Args:
-            sources (Dict[str, Any]): Dictionary containing 'reports', 'general', and other source types.
-            openai_bot (Any): Instance of OpenAIBot.
-            cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
         """
+        # Get system_config from the full config for methods that need it
+        system_config = config.get("system", {})
+
         logging.info(f"Running checks for some platform")
         reports_list = sources.get("reports", [])
         general_list = sources.get("general", [])
         other_sources = {k: v for k, v in sources.items() if k not in ["reports", "general"]}
 
+        # These methods only need system_config, which is fine
         self.check_reports(reports_list, openai_bot, cache_manager, system_config)
         self.check_general(general_list, openai_bot, cache_manager, system_config)
-        self.process_other_sources(other_sources, openai_bot, cache_manager, system_config)
+
+        self.process_other_sources(other_sources, openai_bot, cache_manager, config)
 
         logging.info(f"Checks finished for that platform")

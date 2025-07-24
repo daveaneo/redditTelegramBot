@@ -180,9 +180,9 @@ Only return the JSON response and nothing else.
 
 example:
 
-{
+{{
   "sentiment": 58,
   "direction": "bullish"
-}
+}}
 
 Text: {content}
