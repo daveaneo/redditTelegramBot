@@ -160,13 +160,7 @@ class OpenAIBot:
             str: The JSON response from the model.
         """
 
-        print('before prompt')
-        print(f"--- DEBUG: TEMPLATE IS: {repr(self.sentiment_prompt_template)} ---")
-
         prompt: str = self.sentiment_prompt_template.format(character_limit=character_limit, content=post_content)
-        print('after prompt')
-
-        print(f'prompt: {prompt}')
 
         # MODIFIED: Updated function definition to the 'tools' format
         sentiment_tool = [{
@@ -193,9 +187,6 @@ class OpenAIBot:
                 }
             }
         }]
-
-        print(f'sentiment_tool: {sentiment_tool}')
-
 
         return self.generate_response(prompt, max_tokens=character_limit, temperature=0.7, model="gpt-4o-mini",
                                       tools=sentiment_tool)

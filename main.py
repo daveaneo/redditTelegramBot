@@ -52,7 +52,8 @@ def run_reddit_checks():
     reddit_sources = config.get("platforms", {}).get("reddit", {})
     system_config = config.get("system", {})
 
-    reddit_bot.run(reddit_sources, openai_bot, cache_manager, system_config)
+    # reddit_bot.run(reddit_sources, openai_bot, cache_manager, system_config)
+    reddit_bot.run(reddit_sources, openai_bot, cache_manager, config)
 
 
 def cleanup_cache():

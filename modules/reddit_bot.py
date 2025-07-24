@@ -30,7 +30,7 @@ class RedditBot(SocialMediaBot):
             reports_list: List[str],
             openai_bot: Any,
             cache_manager: Any,
-            system_config: Dict[str, Any]
+            config: Dict[str, Any]
     ) -> None:
         """
         Processes posts from 'reports' users within the last week.
@@ -39,23 +39,26 @@ class RedditBot(SocialMediaBot):
             reports_list (List[str]): List of Reddit usernames for reports.
             openai_bot (Any): Instance of OpenAIBot.
             cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
+            config (Dict[str, Any]): System configuration parameters.
         """
-        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)  # Timestamp for 7 days ago
+        # Extract system_config from the full config object
+
+        print("\nCONFIG---------")
+        print(config)
+
+        system_config = config.get("system", {})
+        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)
 
         for user in reports_list:
             try:
-                for submission in self.client.redditor(user).submissions.new(limit=25):  # Fetch latest 25 posts
-                    if submission.created_utc >= one_week_ago:  # Only process posts from the last 7 days
-                        logging.debug(f"Processing submission: {submission.id} from {user}")
-
+                for submission in self.client.redditor(user).submissions.new(limit=25):
+                    if submission.created_utc >= one_week_ago:
                         if not cache_manager.is_cached(submission.id):
                             cache_manager.add(submission.id)
-                            social_score = f'{submission.author.link_karma:,} karma' # Added comma for readability
+                            social_score = f'{submission.author.link_karma:,} karma'
                             self.process_significant_message("Reddit: report", user, submission, openai_bot, system_config, social_score)
                         else:
                             logging.debug(f"Report post {submission.id} already processed. Skipping.")
-            # MODIFIED: Added specific exception for 'Not Found' error
             except prawcore.exceptions.NotFound:
                 logging.warning(f"Reddit user '{user}' not found. Skipping.")
             except Exception as e:
@@ -66,30 +69,19 @@ class RedditBot(SocialMediaBot):
             general_list: List[str],
             openai_bot: Any,
             cache_manager: Any,
-            system_config: Dict[str, Any]
+            config: Dict[str, Any]
     ) -> None:
-        """
-        Processes posts from 'general' users within the last week.
-
-        Posts are analyzed for significance and forwarded if deemed significant.
-
-        Args:
-            general_list (List[str]): List of Reddit usernames for general posts.
-            openai_bot (Any): Instance of OpenAIBot.
-            cache_manager (Any): Instance of CacheManager.
-            system_config (Dict[str, Any]): System configuration parameters.
-        """
-        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)  # Timestamp for 7 days ago
+        """Processes posts from 'general' users."""
+        # Extract system_config from the full config object
+        system_config = config.get("system", {})
+        one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)
 
         for user in general_list:
             try:
-                for submission in self.client.redditor(user).submissions.new(limit=25):  # Fetch latest 25 posts
-                    if submission.created_utc >= one_week_ago:  # Only process posts from the last 7 days
+                for submission in self.client.redditor(user).submissions.new(limit=25):
+                    if submission.created_utc >= one_week_ago:
                         if not cache_manager.is_cached(submission.id):
                             cache_manager.add(submission.id)
-
-                            # Analyze post for significance.
-                            # MODIFIED: Parse the JSON response from review_post
                             significance_json = openai_bot.review_post(submission.selftext)
                             try:
                                 significance_data = json.loads(significance_json)
@@ -98,8 +90,7 @@ class RedditBot(SocialMediaBot):
                                 is_significant = False
                                 logging.error(f"Could not parse significance JSON: {significance_json}")
 
-
-                            social_score = f'{submission.author.link_karma:,} karma' # Added comma for readability
+                            social_score = f'{submission.author.link_karma:,} karma'
 
                             if is_significant:
                                 self.process_significant_message(

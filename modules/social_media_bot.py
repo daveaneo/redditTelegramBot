@@ -39,51 +39,25 @@ class SocialMediaBot(ABC):
     ) -> None:
         """
         Processes a significant post and sends a neatly formatted message to Telegram.
-
-        Args:
-            label (str): A label for the post (e.g., "Report").
-            user (str): The username associated with the post.
-            submission (Any): The submission object from the source platform.
-            openai_bot (Any): An instance of OpenAIBot for generating responses.
-            system_config (Dict[str, Any]): System configuration parameters.
-            social_score (Optional[str]): A formatted string for the social score
-                                          (e.g., "2,500 karma" or "1.2M followers").
-                                          This line is omitted if not provided.
         """
         post_time = self._format_post_time(submission)
-
-        # --- Build the new, neatly formatted message ---
-        message_parts = []
-        message_parts.append(f"<b>Source:</b> {label}")
-        message_parts.append(f"<b>User:</b> {user}")
-
-        # Conditionally add the social score only if it exists
+        message_parts = [f"<b>Source:</b> {label}", f"<b>User:</b> {user}"]
         if social_score:
             message_parts.append(f"<b>Social Score:</b> {social_score}")
-
         message_parts.append(f"<b>Time:</b> {post_time}")
-
-        # MODIFIED: Use submission.shortlink to get a direct, permanent URL to the post.
-        # This fixes the issue of linking to an image gallery instead of the post itself.
         link_html = f"<a href='{submission.shortlink}'>View Original Post</a>"
-        message_parts.append(f"\n{link_html}")  # Add a newline for spacing
-
+        message_parts.append(f"\n{link_html}")
         original_message = "\n".join(message_parts)
-        # --- End of message building ---
-
         logging.info(f"Formatted message created:\n{original_message}")
-
-        # Fetch sentiment and summary (no changes here)
         sentiment = openai_bot.analyze_sentiment(
-            submission.selftext,
-            system_config.get("sentiment_char_limit", 100)
+            submission.selftext, system_config.get("sentiment_char_limit", 100)
         )
-        summary = openai_bot.summarize_text(
-            submission.selftext,
-            system_config.get("summary_char_limit", 500) # The config value is changed
-        )
+        summary_limit = system_config.get("summary_char_limit", 500)
+        summary = openai_bot.summarize_text(submission.selftext, summary_limit)
 
-        # Call send_telegram_message with the newly formatted original_message
+        print("SYSTEM CONFIG IN PROCESS...")
+        print(system_config)
+
         self.send_telegram_message(original_message, sentiment, summary, system_config)
 
     def send_heartbeat_message(self, system_config):
@@ -94,28 +68,16 @@ class SocialMediaBot(ABC):
             system_config (dict): Configuration settings.
         """
         if not system_config.get("telegram_enabled", True):
-            logging.info("Telegram notifications are disabled.")
             return
-
-        # print(system_config)
-
         TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
         TELEGRAM_CHAT_ID = system_config.get("telegram_heartbeat_recipient", "")
-
         if not TELEGRAM_CHAT_ID:
             logging.warning("No heartbeat recipient specified in config.")
             return
-
         send_message_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-
-        # Format timestamp for logging
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
-
-        # Heartbeat message
         heartbeat_message = f"✅ Bot is still running. Last check-in: {timestamp}"
-
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": heartbeat_message}
-
         try:
             response = requests.post(send_message_url, json=payload)
             if response.status_code != 200:
@@ -151,6 +113,13 @@ class SocialMediaBot(ABC):
 
         if not all([TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID]):
             logging.error("Telegram bot token or chat ID is not configured. Message not sent.")
+            print("==================================================")
+            print(f'TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN}')
+            print(f'TELEGRAM_CHAT_ID: {TELEGRAM_CHAT_ID}')
+            print(f'config: \n\n{system_config}')
+            print("==================================================")
+
+
             return
 
         send_message_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -197,12 +166,12 @@ class SocialMediaBot(ABC):
                 logging.error(f"Telegram API error details: {e.response.text}")
 
     @abstractmethod
-    def check_reports(self, reports_list: List[str], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
+    def check_reports(self, reports_list: List[str], openai_bot: Any, cache_manager: Any, config: Dict[str, Any]) -> None:
         """Processes posts from 'reports' users."""
         raise NotImplementedError("Subclasses must implement check_reports()")
 
     @abstractmethod
-    def check_general(self, general_list: List[str], openai_bot: Any, cache_manager: Any, system_config: Dict[str, Any]) -> None:
+    def check_general(self, general_list: List[str], openai_bot: Any, cache_manager: Any, config: Dict[str, Any]) -> None:
         """Processes posts from 'general' users."""
         raise NotImplementedError("Subclasses must implement check_general()")
 
@@ -215,21 +184,18 @@ class SocialMediaBot(ABC):
         raise NotImplementedError("Subclasses must implement process_other_sources()")
 
     def run(self, sources: Dict[str, Any], openai_bot: Any, cache_manager: Any, config: Dict[str, Any]) -> None:
-        """
-        Runs checks for reports, general posts, and additional sources.
-        """
-        # Get system_config from the full config for methods that need it
-        system_config = config.get("system", {})
+        """Runs checks for reports, general posts, and additional sources."""
+        # This no longer needs to be extracted here
+        # system_config = config.get("system", {})
 
-        logging.info(f"Running checks for some platform")
+        logging.info("Running checks for some platform")
         reports_list = sources.get("reports", [])
         general_list = sources.get("general", [])
         other_sources = {k: v for k, v in sources.items() if k not in ["reports", "general"]}
 
-        # These methods only need system_config, which is fine
-        self.check_reports(reports_list, openai_bot, cache_manager, system_config)
-        self.check_general(general_list, openai_bot, cache_manager, system_config)
-
+        # Pass the FULL config object to all methods for consistency
+        self.check_reports(reports_list, openai_bot, cache_manager, config)
+        self.check_general(general_list, openai_bot, cache_manager, config)
         self.process_other_sources(other_sources, openai_bot, cache_manager, config)
 
-        logging.info(f"Checks finished for that platform")
+        logging.info("Checks finished for that platform")
